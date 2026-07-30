@@ -4,7 +4,7 @@
 
 An interactive, browser-based simulation of **OAuth 2.0 Device Authorization Grant abuse** (RFC 8628), commonly called *Device Code Phishing*. Built for SOC analysts, blue teamers, and security awareness training.
 
-🔗 **Live demo:** `https://YOUR-USERNAME.github.io/devicecode-phishing-sim/`
+🔗 **Live demo:** `https://device-code-phishing-sim.pages.dev/`
 
 ![License](https://img.shields.io/badge/license-MIT-green) ![Purpose](https://img.shields.io/badge/purpose-defensive%20training-blue) ![No Server](https://img.shields.io/badge/server-none%20required-lightgrey)
 
