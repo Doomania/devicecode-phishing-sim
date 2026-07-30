@@ -50,16 +50,6 @@ Controls:
 
 ---
 
-## Deploy to GitHub Pages
-
-1. Push this repo to GitHub
-2. Go to **Settings → Pages**
-3. Source: `Deploy from a branch` → `main` → `/ (root)`
-4. Save — live in ~60 seconds at `https://YOUR-USERNAME.github.io/devicecode-phishing-sim/`
-
-The included GitHub Actions workflow (`.github/workflows/pages.yml`) automates this on every push.
-
----
 
 ## Detection (Microsoft Sentinel / Entra ID)
 
